@@ -48,7 +48,7 @@ const controller = {
 			description: description.trim(),
 			price: +price,
 			discount: +discount,
-			image: "default-image.png",
+			image: req.file ? req.file.filename : "default-image.png",
 			category
 		}
 
@@ -71,26 +71,34 @@ const controller = {
 	// Update - Method to update
 	update: (req, res) => {
 		let products = readProducts();
+		const {name, price,discount, description, category} = req.body;
 
-		const { name, price, discount, description, category } = req.body;
+		const product = products.find(product => product.id === +req.params.id)
 
 		const productsModify = products.map(product => {
-			if (product.id === +req.params.id) {
+			if(product.id === +req.params.id){
 				let productModify = {
 					...product,
-					name: name.trim(),
-					price: +price,
-					discount: +discount,
-					description: description.trim(),
+					name : name.trim(), 
+					price : +price,
+					discount : +discount,
+					description : description.trim(), 
+					image : req.file ? req.file.filename : product.image,
 					category
 				}
 				return productModify
 			}
 			return product
-		})
-		saveProducts(productsModify);
-		return res.redirect('/products')
+		});
 
+		if(req.file && product.image !== "default-image.png"){
+			if(fs.existsSync('./public/images/products/' + product.image)){
+				fs.unlinkSync('./public/images/products/' + product.image)
+			}
+		}
+
+		saveProducts(productsModify);
+		return res.redirect('/products');
 	},
 
 	// Delete - Delete one product from DB
